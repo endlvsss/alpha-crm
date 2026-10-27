@@ -1,0 +1,212 @@
+@import "tailwindcss";
+
+/* El tema se controla con data-theme en <html> (script en layout.tsx). */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* Claro y cálido: crema, azul petróleo del brochure y turquesa del logo. */
+:root {
+  color-scheme: light;
+  --bg: #f5f1ea;
+  --bg-sunken: #ebe5d9;
+  --surface: #fffdf9;
+  --surface-2: #f8f4ec;
+  --ink: #15262c;
+  --ink-soft: #33474e;
+  --muted: #536368;
+  --line: #ddd5c7;
+  --line-strong: #c7bdac;
+  --brand: #1d4f5e;
+  --brand-strong: #163f4b;
+  --on-brand: #f7f3ec;
+  --accent: #1cb5c0;
+  --accent-ink: #0b6d76;
+  --accent-soft: #d5eeee;
+  --amber: #8a4f0a;
+  --amber-bright: #e0a33b;
+  --amber-soft: #f6e5c8;
+  --danger: #b4232a;
+  --danger-soft: #f7dddb;
+  --ok: #276d4c;
+  --ok-soft: #dcede2;
+  --ring: #1cb5c0;
+  --logo-accent: #12a8b4;
+  --deep: #12343e;
+  --on-deep: #eef4f2;
+  --on-deep-muted: #a7bfc1;
+  --danger-on-deep: #ffb4b4;
+  --shadow-card: 0 1px 2px rgb(21 38 44 / 0.05), 0 12px 32px -18px rgb(21 38 44 / 0.28);
+  --shadow-float: 0 2px 6px rgb(21 38 44 / 0.08), 0 24px 48px -20px rgb(21 38 44 / 0.35);
+}
+
+/* Oscuro: el mismo lenguaje de alphatecnologia.cl (casi negro + cian). */
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0f1a21;
+  --bg-sunken: #0b151b;
+  --surface: #17242c;
+  --surface-2: #1c2b34;
+  --ink: #e4ecee;
+  --ink-soft: #c3d0d3;
+  --muted: #8fa1a5;
+  --line: #26363f;
+  --line-strong: #364a54;
+  --brand: #53d8ea;
+  --brand-strong: #85e6f2;
+  --on-brand: #03151a;
+  --accent: #53d8ea;
+  --accent-ink: #6fe0ef;
+  --accent-soft: #123842;
+  --amber: #f0b45b;
+  --amber-bright: #f0b45b;
+  --amber-soft: #352816;
+  --danger: #f27474;
+  --danger-soft: #3a1b1e;
+  --ok: #63d29c;
+  --ok-soft: #153325;
+  --ring: #53d8ea;
+  --logo-accent: #1cb5c0;
+  --deep: #10323b;
+  --on-deep: #e4ecee;
+  --on-deep-muted: #9fb8bc;
+  --danger-on-deep: #f27474;
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.5), 0 16px 40px -22px rgb(0 0 0 / 0.9);
+  --shadow-float: 0 2px 6px rgb(0 0 0 / 0.5), 0 28px 56px -24px rgb(0 0 0 / 0.95);
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg-sunken: var(--bg-sunken);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-brand: var(--brand);
+  --color-brand-strong: var(--brand-strong);
+  --color-on-brand: var(--on-brand);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-amber: var(--amber);
+  --color-amber-bright: var(--amber-bright);
+  --color-amber-soft: var(--amber-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-logo-accent: var(--logo-accent);
+  --color-deep: var(--deep);
+  --color-on-deep: var(--on-deep);
+  --color-on-deep-muted: var(--on-deep-muted);
+  --color-danger-on-deep: var(--danger-on-deep);
+
+  /* Escena «03:12»: siempre de noche, en los dos temas. */
+  --color-night: #0a1318;
+  --color-night-surface: #131f26;
+  --color-on-night: #e4ecee;
+  --color-on-night-muted: #a6b6ba;
+  --color-night-accent: #53d8ea;
+  --color-night-danger: #ff7a7a;
+
+  /* Nada que deba leerse queda bajo 13 px. */
+  --text-xs: 0.8125rem;
+  --text-xs--line-height: 1.4;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-space-grotesk), var(--font-inter), ui-sans-serif, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+
+  --shadow-card: var(--shadow-card);
+  --shadow-float: var(--shadow-float);
+
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --animate-rise: rise 700ms var(--ease-out-expo) both;
+  --animate-pulse-ring: pulse-ring 2.4s var(--ease-out-quart) infinite;
+
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes pulse-ring {
+    0% {
+      transform: scale(0.6);
+      opacity: 0.55;
+    }
+    80%,
+    100% {
+      transform: scale(2.2);
+      opacity: 0;
+    }
+  }
+}
+
+@layer base {
+  html {
+    background-color: var(--bg);
+    color: var(--ink);
+    scroll-padding-top: 5.5rem;
+    -webkit-tap-highlight-color: transparent;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    font-feature-settings: "cv11", "ss01";
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background-color: color-mix(in oklab, var(--accent) 32%, transparent);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  /* Evita el zoom de iOS al enfocar campos: nunca menos de 16 px. */
+  input,
+  select,
+  textarea {
+    font-size: max(16px, 1em);
+  }
+
+  summary {
+    cursor: pointer;
+  }
+
+  /* Toque inmediato (sin la espera del doble toque) y sin seleccionar el texto
+     de un control al mantenerlo presionado. El contenido sigue seleccionable. */
+  button,
+  a,
+  summary,
+  [role="button"],
+  [role="tab"],
+  [role="radio"] {
+    touch-action: manipulation;
+  }
+
+  button,
+  summary,
+  [role="button"],
+  [role="tab"],
+  [role="radio"] {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  summary::-webkit-details-marker {
+    display: none;
+  }
+}
