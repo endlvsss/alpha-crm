@@ -12,16 +12,20 @@ import type {
   Cliente,
   Cobro,
   CuentaPlataforma,
+  EntradaIntegracion,
   Dispositivo,
   EstadoCliente,
   Evento,
   Iso,
+  Nota,
   Orden,
   Origen,
+  Pago,
   SubestadoCliente,
   Suscripcion,
   Tecnico,
   Ticket,
+  Usuario,
   Vehiculo,
   Visita,
 } from "@/lib/domain/types";
@@ -31,6 +35,7 @@ export interface Db {
   clientes: Cliente[];
   vehiculos: Vehiculo[];
   ordenes: Orden[];
+  pagos: Pago[];
   suscripciones: Suscripcion[];
   cobros: Cobro[];
   tecnicos: Tecnico[];
@@ -40,6 +45,9 @@ export interface Db {
   cuentas: CuentaPlataforma[];
   alertas: AlertaPlataforma[];
   eventos: Evento[];
+  notas: Nota[];
+  usuarios: Usuario[];
+  entradas: EntradaIntegracion[];
 }
 
 // ——— Utilidades ———
@@ -71,6 +79,12 @@ function weekday(iso: IsoDate): number {
 /** Lleva una fecha al siguiente día hábil (lunes a sábado). */
 function workday(iso: IsoDate): IsoDate {
   return weekday(iso) === 0 ? addDays(iso, 1) : iso;
+}
+
+/** Día hábil anterior (lunes a sábado). */
+function prevWorkday(iso: IsoDate): IsoDate {
+  const d = addDays(iso, -1);
+  return weekday(d) === 0 ? addDays(d, -1) : d;
 }
 
 /** Instante en hora de Chile (verano, UTC−3). */
@@ -131,19 +145,46 @@ export const BLOQUE_FIN: Record<string, string> = {
   "16:00": "18:00",
 };
 
+// ——— Equipo interno (ficticio) ———
+
+export const EQUIPO: Usuario[] = [
+  { id: "usr-1", nombre: "Paula Vergara", rol: "ventas" },
+  { id: "usr-2", nombre: "Tomás Riquelme", rol: "ventas" },
+  { id: "usr-3", nombre: "Ignacia Bravo", rol: "operaciones" },
+  { id: "usr-4", nombre: "Martín Salas", rol: "soporte" },
+  { id: "usr-5", nombre: "Carla Núñez", rol: "finanzas" },
+];
+
+/** Bloques que acepta un técnico activo: todos, de lunes a sábado. */
+const SEMANA_COMPLETA: Record<number, string[]> = Object.fromEntries(
+  [1, 2, 3, 4, 5, 6].map((d) => [d, ["09:00", "11:00", "14:00", "16:00"]]),
+);
+
+const DOCS_OK: Tecnico["documentos"] = [
+  { tipo: "cedula", estado: "aprobado" },
+  { tipo: "antecedentes", estado: "aprobado" },
+  { tipo: "licencia", estado: "aprobado" },
+  { tipo: "certificacion", estado: "aprobado" },
+];
+
 // ——— Técnicos ———
 
 const TECNICOS: Tecnico[] = [
   {
     id: "tec-1",
     nombre: "Diego Fuentes",
-    rut: "15.932.118-5",
-    telefono: "+56 9 6123 4401",
+    rut: "15.678.901-1",
+    telefono: "+56 9 6543 2109",
     email: "diego.fuentes@correo.cl",
     comunas: ["Ñuñoa", "Providencia", "Santiago", "La Reina", "Macul", "Peñalolén", "Las Condes", "Vitacura"],
     estado: "activo",
     cupoDiario: 3,
     validadoEn: "2026-09-02",
+    postuladoEn: "2026-08-20",
+    experienciaAnios: 6,
+    especialidades: ["Autos particulares", "Camionetas"],
+    documentos: DOCS_OK,
+    disponibilidad: SEMANA_COMPLETA,
   },
   {
     id: "tec-2",
@@ -155,6 +196,11 @@ const TECNICOS: Tecnico[] = [
     estado: "activo",
     cupoDiario: 3,
     validadoEn: "2026-09-09",
+    postuladoEn: "2026-08-28",
+    experienciaAnios: 4,
+    especialidades: ["Autos particulares", "Eléctrica automotriz"],
+    documentos: DOCS_OK,
+    disponibilidad: SEMANA_COMPLETA,
   },
   {
     id: "tec-3",
@@ -166,6 +212,11 @@ const TECNICOS: Tecnico[] = [
     estado: "activo",
     cupoDiario: 2,
     validadoEn: "2026-09-16",
+    postuladoEn: "2026-09-03",
+    experienciaAnios: 9,
+    especialidades: ["Camionetas", "Camiones livianos", "Alarmas"],
+    documentos: DOCS_OK,
+    disponibilidad: SEMANA_COMPLETA,
   },
   {
     id: "tec-4",
@@ -177,6 +228,11 @@ const TECNICOS: Tecnico[] = [
     estado: "activo",
     cupoDiario: 3,
     validadoEn: "2026-09-23",
+    postuladoEn: "2026-09-10",
+    experienciaAnios: 3,
+    especialidades: ["Autos particulares"],
+    documentos: DOCS_OK,
+    disponibilidad: SEMANA_COMPLETA,
   },
   {
     id: "tec-5",
@@ -188,6 +244,11 @@ const TECNICOS: Tecnico[] = [
     estado: "en_validacion",
     cupoDiario: 2,
     validadoEn: null,
+    postuladoEn: "2026-10-12",
+    experienciaAnios: 2,
+    especialidades: ["Autos particulares"],
+    documentos: [{ tipo: "cedula", estado: "aprobado" }, { tipo: "antecedentes", estado: "pendiente" }, { tipo: "licencia", estado: "aprobado" }, { tipo: "certificacion", estado: "pendiente" }],
+    disponibilidad: { 1: ["09:00", "11:00"], 3: ["09:00", "11:00"], 5: ["14:00", "16:00"], 6: ["09:00", "11:00"] },
   },
   {
     id: "tec-6",
@@ -199,6 +260,11 @@ const TECNICOS: Tecnico[] = [
     estado: "postulante",
     cupoDiario: 2,
     validadoEn: null,
+    postuladoEn: "2026-10-22",
+    experienciaAnios: 1,
+    especialidades: ["Autos particulares", "Audio y accesorios"],
+    documentos: [{ tipo: "cedula", estado: "aprobado" }, { tipo: "antecedentes", estado: "pendiente" }, { tipo: "licencia", estado: "pendiente" }, { tipo: "certificacion", estado: "pendiente" }],
+    disponibilidad: { 2: ["14:00", "16:00"], 4: ["14:00", "16:00"], 6: ["09:00", "11:00", "14:00"] },
   },
 ];
 
@@ -215,6 +281,8 @@ type Escenario =
   | "en_camino"
   | "en_instalacion"
   | "incidencia"
+  | "pendiente_pago"
+  | "instalado"
   | "activo"
   | "activo_flota"
   | "activo_soporte"
@@ -226,7 +294,8 @@ type Escenario =
 
 const ESCENARIOS: Escenario[] = [
   ...Array<Escenario>(4).fill("interesado"),
-  ...Array<Escenario>(3).fill("checkout"),
+  ...Array<Escenario>(2).fill("checkout"),
+  "pendiente_pago",
   ...Array<Escenario>(5).fill("abandonado"),
   ...Array<Escenario>(3).fill("por_agendar"),
   ...Array<Escenario>(2).fill("lista_espera"),
@@ -235,7 +304,8 @@ const ESCENARIOS: Escenario[] = [
   "en_camino",
   "en_instalacion",
   ...Array<Escenario>(2).fill("incidencia"),
-  ...Array<Escenario>(12).fill("activo"),
+  "instalado",
+  ...Array<Escenario>(11).fill("activo"),
   ...Array<Escenario>(2).fill("activo_flota"),
   "activo_soporte",
   "activo_desacople",
@@ -248,6 +318,7 @@ const ESCENARIOS: Escenario[] = [
 const ESTADO_DE: Record<Escenario, [EstadoCliente, SubestadoCliente | null]> = {
   interesado: ["LEAD", "INTERESADO"],
   checkout: ["LEAD", "CHECKOUT INICIADO"],
+  pendiente_pago: ["LEAD", "CHECKOUT INICIADO"],
   abandonado: ["LEAD", "CHECKOUT ABANDONADO"],
   por_agendar: ["PAGADO", null],
   lista_espera: ["PAGADO", null],
@@ -256,6 +327,7 @@ const ESTADO_DE: Record<Escenario, [EstadoCliente, SubestadoCliente | null]> = {
   en_camino: ["INSTALACIÓN AGENDADA", "TÉCNICO EN CAMINO"],
   en_instalacion: ["INSTALACIÓN AGENDADA", "EN INSTALACIÓN"],
   incidencia: ["INSTALACIÓN AGENDADA", "INCIDENCIA INSTALACIÓN"],
+  instalado: ["INSTALACIÓN AGENDADA", null],
   activo: ["ACTIVO", null],
   activo_flota: ["ACTIVO", null],
   activo_soporte: ["ACTIVO", "SOPORTE ABIERTO"],
@@ -284,6 +356,7 @@ export function buildDb(hoy: IsoDate = santiagoToday()): Db {
     clientes: [],
     vehiculos: [],
     ordenes: [],
+    pagos: [],
     suscripciones: [],
     cobros: [],
     tecnicos: TECNICOS,
@@ -293,9 +366,13 @@ export function buildDb(hoy: IsoDate = santiagoToday()): Db {
     cuentas: [],
     alertas: [],
     eventos: [],
+    notas: [],
+    usuarios: EQUIPO,
+    entradas: [],
   };
 
   let nOrden = 0;
+  let porAgendarSinVisita = true;
   let nVisita = 0;
   let nTicket = 0;
   let nEvento = 0;
@@ -360,7 +437,7 @@ export function buildDb(hoy: IsoDate = santiagoToday()): Db {
 
     // Antigüedad según la etapa: los activos llevan más tiempo.
     const antiguedad: Record<Escenario, [number, number]> = {
-      interesado: [0, 6], checkout: [0, 3], abandonado: [2, 14],
+      interesado: [0, 6], checkout: [0, 3], pendiente_pago: [0, 1], abandonado: [2, 14], instalado: [4, 8],
       por_agendar: [1, 3], lista_espera: [4, 9], requiere_persona: [12, 16],
       agendada: [1, 5], en_camino: [3, 6], en_instalacion: [3, 6], incidencia: [5, 9],
       activo: [12, 95], activo_flota: [30, 70], activo_soporte: [25, 60], activo_desacople: [20, 50],
@@ -390,7 +467,9 @@ export function buildDb(hoy: IsoDate = santiagoToday()): Db {
       creadoEn: at(diaAlta, horaAlta),
       cuentaCreadaEn: null,
       instaladoEn: null,
+      activadoEn: null,
       motivoBaja: null,
+      responsableId: pick(["usr-1", "usr-2"]),
     };
     db.clientes.push(cliente);
     evento(cliente, "cliente", cliente.id, "LEAD", cliente.creadoEn, "sistema", `${origen}${cliente.campana ? ` · ${cliente.campana}` : ""}`);
@@ -434,6 +513,11 @@ export function buildDb(hoy: IsoDate = santiagoToday()): Db {
     evento(cliente, "orden", "", "CHECKOUT INICIADO", orden.creadaEn, "cliente", `${getPlan(planId).name} · ${periodicidad}`);
 
     if (esc === "checkout") return;
+    if (esc === "pendiente_pago") {
+      orden.estado = "pendiente_pago";
+      evento(cliente, "orden", "", "Redirigido a Webpay", at(orden.creadaEn.slice(0, 10), after(orden.creadaEn.slice(11, 16), 3)), "cliente", "Esperando respuesta de la pasarela");
+      return;
+    }
     if (esc === "abandonado") {
       orden.estado = "abandonada";
       evento(cliente, "orden", "", "CHECKOUT ABANDONADO", at(addDays(orden.creadaEn.slice(0, 10), 1), "00:30"), "sistema",
@@ -507,8 +591,18 @@ export function buildDb(hoy: IsoDate = santiagoToday()): Db {
       checkInEn: null,
       checkOutEn: null,
       creadaEn: orden.pagadaEn!,
+      checklist: [],
+      observaciones: null,
+      fotos: 0,
     }));
+
+    // Un pago confirmado todavía sin orden de instalación (etapa «Pago confirmado»).
+    if (esc === "por_agendar" && porAgendarSinVisita) {
+      porAgendarSinVisita = false;
+      return;
+    }
     db.visitas.push(...visitas);
+    evento(cliente, "visita", "", "Orden de instalación creada", orden.pagadaEn!, "sistema", "Enlace de agenda enviado al cliente");
 
     if (esc === "por_agendar") return;
     if (esc === "lista_espera" || esc === "requiere_persona") {
@@ -541,6 +635,8 @@ export function buildDb(hoy: IsoDate = santiagoToday()): Db {
       evento(cliente, "visita", "", "TÉCNICO EN CAMINO", at(hoy, esc === "en_camino" ? "10:31" : "08:24"), "tecnico");
       if (esc === "en_instalacion") {
         visitas[0].checkInEn = at(hoy, "09:06");
+        visitas[0].fotos = 5;
+        visitas[0].checklist = ["patente", "fotos_inicio", "ubicacion"];
         evento(cliente, "visita", "", "EN INSTALACIÓN", visitas[0].checkInEn, "tecnico", "Check-in: patente verificada · 5 fotos");
       }
       return;
@@ -560,7 +656,7 @@ export function buildDb(hoy: IsoDate = santiagoToday()): Db {
     if (!instaladas.includes(esc)) return;
 
     // Instalación ya hecha (o fallida)
-    const diaInst = workday(addDays(diaPago, int(2, 5)));
+    const diaInst = esc === "instalado" ? prevWorkday(hoy) : workday(addDays(diaPago, int(2, 5)));
     visitas.forEach((v, k) => {
       const [fecha, bloque] = reservar(tec, diaInst, BLOQUES[k % BLOQUES.length]);
       asignar(v, fecha, bloque, tec);
@@ -574,6 +670,9 @@ export function buildDb(hoy: IsoDate = santiagoToday()): Db {
       const causa = pick<CausaFalla>(["electrico", "senal", "falla_gps", "incompatibilidad"]);
       visitas[0].estado = "fallida";
       visitas[0].causaFalla = causa;
+      visitas[0].fotos = 4;
+      visitas[0].checklist = ["patente", "fotos_inicio", "ubicacion", "conexion"];
+      visitas[0].observaciones = "No se logró completar las pruebas. Se dejó el vehículo como estaba.";
       const folioTk = `TK-2026-${pad(++nTicket)}`;
       db.tickets.push({
         folio: folioTk,
@@ -585,6 +684,7 @@ export function buildDb(hoy: IsoDate = santiagoToday()): Db {
         asunto: "Instalación fallida",
         detalle: `Causa: ${causa}. El técnico subió fotos y evidencia. Se coordina segunda visita.`,
         visitaFolio: null,
+        responsableId: "usr-3",
         creadoEn: at(visitas[0].fecha!, "12:40"),
         resueltoEn: null,
       });
@@ -606,6 +706,9 @@ export function buildDb(hoy: IsoDate = santiagoToday()): Db {
         causaFalla: null,
         checkInEn: null,
         creadaEn: at(addDays(visitas[0].fecha!, 1), "10:00"),
+        checklist: [],
+        observaciones: null,
+        fotos: 0,
       });
       evento(cliente, "visita", "", "Segunda visita agendada", at(addDays(visitas[0].fecha!, 1), "10:00"), "operaciones", `${f2} · ${b2}`);
       return;
@@ -620,18 +723,26 @@ export function buildDb(hoy: IsoDate = santiagoToday()): Db {
       v.estado = "cerrada_ok";
       v.imei = gps;
       v.checkOutEn = at(v.fecha!, v.bloque!.replace(/:00$/, ":58"));
-      veh.estado = "activo";
+      v.fotos = 7;
+      v.checklist = [...CHECKLIST_COMPLETO];
+      veh.estado = esc === "instalado" ? "pendiente" : "activo";
       veh.imeiGps = gps;
       veh.imeiTag = tag;
       const pulso = esc === "suspendido" || esc === "cancelado" ? null : at(hoy, `${pad(int(6, 9), 2)}:${pad(int(0, 59), 2)}`);
-      db.dispositivos.push({ imei: gps, modelo: "VL103M", tipo: "gps", simIccid: `8956${int(1e9, 9e9)}`, estado: esc === "cancelado" ? "retirado" : "activo", custodiaTecnicoId: null, vehiculoId: veh.id, ultimoPulso: pulso, bateria: null });
-      if (tag) db.dispositivos.push({ imei: tag, modelo: "PB705", tipo: "tag", simIccid: null, estado: esc === "cancelado" ? "retirado" : "activo", custodiaTecnicoId: null, vehiculoId: veh.id, ultimoPulso: pulso, bateria: int(54, 100) });
+      const estadoEquipo = esc === "cancelado" ? "retirado" : esc === "instalado" ? "instalado" : "activo";
+      db.dispositivos.push({ imei: gps, modelo: "VL103M", tipo: "gps", simIccid: `8956${int(1e9, 9e9)}`, estado: estadoEquipo, custodiaTecnicoId: null, vehiculoId: veh.id, ultimoPulso: pulso, bateria: null });
+      if (tag) db.dispositivos.push({ imei: tag, modelo: "PB705", tipo: "tag", simIccid: null, estado: estadoEquipo, custodiaTecnicoId: null, vehiculoId: veh.id, ultimoPulso: pulso, bateria: int(54, 100) });
     });
     const fin = visitas[visitas.length - 1].checkOutEn!;
     cliente.instaladoEn = fin;
     cuenta.estadoUsuario = "activo";
-    cuenta.ultimoIngreso = at(addDays(hoy, -int(0, 6)), time());
     evento(cliente, "visita", "", "INSTALADO", fin, "tecnico", `Check-out con firma · IMEI ${visitas[0].imei}`);
+    if (esc === "instalado") {
+      evento(cliente, "plataforma", cliente.id, "Activación pendiente", at(addDays(fin.slice(0, 10), 1), "09:00"), "sistema", "Falta confirmar el pulso en GPSTracker (sin API: confirmación manual)");
+      return;
+    }
+    cliente.activadoEn = fin;
+    cuenta.ultimoIngreso = at(addDays(hoy, -int(0, 6)), time());
     evento(cliente, "plataforma", cliente.id, "VEHÍCULO ACTIVO", fin, "sistema", `IMEI vinculado en GPSTracker${nVeh > 1 ? ` (${nVeh} vehículos)` : ""}`);
 
     // Cobros mensuales desde la instalación
@@ -669,6 +780,7 @@ export function buildDb(hoy: IsoDate = santiagoToday()): Db {
           ? "La señal de respaldo dejó de estar junto a la principal. Soporte contacta al cliente."
           : "El equipo no reporta hace más de 24 h. El diagnóstico remoto no lo resolvió: se agenda visita técnica.",
         visitaFolio: null,
+        responsableId: "usr-4",
         creadoEn: creado,
         resueltoEn: null,
       });
@@ -678,7 +790,7 @@ export function buildDb(hoy: IsoDate = santiagoToday()): Db {
         const [f, b] = reservar(tec, addDays(hoy, 1));
         db.visitas.push({
           ...visitas[0], folio: "", tipo: "visita_tecnica", ticketFolio: folioTk, fecha: f, bloque: b, estado: "agendada",
-          imei: visitas[0].imei, checkInEn: null, checkOutEn: null, creadaEn: creado,
+          imei: visitas[0].imei, checkInEn: null, checkOutEn: null, creadaEn: creado, checklist: [], observaciones: null, fotos: 0,
         });
         evento(cliente, "visita", "", "Visita técnica agendada", creado, "operaciones", `${f} · ${b}`);
         const d = db.dispositivos.find((x) => x.imei === vehiculos[0].imeiGps);
@@ -771,6 +883,59 @@ export function buildDb(hoy: IsoDate = santiagoToday()): Db {
       e.entidadRef = (e.tipo.startsWith("Segunda") || e.tipo.startsWith("Visita técnica") ? vs[vs.length - 1] : vs[0])?.folio ?? "";
     }
   }
+  // Pagos: uno por intento, separados de la orden.
+  let nPago = 0;
+  const rechazados = db.eventos.filter((e) => e.tipo === "Pago rechazado");
+  for (const o of db.ordenes) {
+    const base = { ordenFolio: o.folio, clienteId: o.clienteId, monto: o.montoTotal, pasarela: o.pasarela };
+    for (const e of rechazados.filter((x) => x.clienteId === o.clienteId)) {
+      db.pagos.push({ ...base, id: `pag-${pad(++nPago, 4)}`, estado: "rechazado", ref: null, motivo: "Fondos insuficientes", creadoEn: e.en, resueltoEn: e.en });
+    }
+    if (o.estado === "pendiente_pago") {
+      db.pagos.push({ ...base, id: `pag-${pad(++nPago, 4)}`, estado: "pendiente", ref: null, motivo: null, creadoEn: o.creadaEn, resueltoEn: null });
+    }
+    if (o.pagadaEn) {
+      const reembolso = db.eventos.find((e) => e.clienteId === o.clienteId && e.tipo === "CANCELADO" && o.estado === "reembolsada");
+      db.pagos.push({
+        ...base,
+        id: `pag-${pad(++nPago, 4)}`,
+        estado: o.estado === "reembolsada" ? "reembolsado" : "aprobado",
+        ref: o.pagoRef,
+        motivo: reembolso ? "Devolución total antes de la instalación" : null,
+        creadoEn: o.pagadaEn,
+        resueltoEn: reembolso?.en ?? o.pagadaEn,
+      });
+    }
+  }
+
+  // Notas internas de ejemplo
+  const conNota = db.clientes.filter((c) => c.subestado === "INCIDENCIA INSTALACIÓN" || c.subestado === "CHECKOUT ABANDONADO").slice(0, 4);
+  conNota.forEach((c, k) => {
+    db.notas.push({
+      id: `not-${pad(k + 1)}`,
+      clienteId: c.id,
+      autorId: c.subestado === "CHECKOUT ABANDONADO" ? c.responsableId : "usr-3",
+      texto:
+        c.subestado === "CHECKOUT ABANDONADO"
+          ? "Pidió que lo llamen después de las 18:00. Duda entre mensual y anual."
+          : "El cliente prefiere bloque de la mañana para la segunda visita.",
+      en: at(addDays(hoy, -1), "17:10"),
+    });
+  });
+
   db.eventos.sort((a, b) => a.en.localeCompare(b.en));
   return db;
 }
+
+/** Checklist del técnico (especificación de instaladores, pantalla I6). */
+export const CHECKLIST: { id: string; label: string; fase: "check-in" | "instalación" | "pruebas" | "cierre" }[] = [
+  { id: "patente", label: "Patente verificada con la orden", fase: "check-in" },
+  { id: "fotos_inicio", label: "Fotos del vehículo antes de intervenir", fase: "check-in" },
+  { id: "ubicacion", label: "Equipo instalado en ubicación oculta", fase: "instalación" },
+  { id: "conexion", label: "Conexiones eléctricas aisladas", fase: "instalación" },
+  { id: "pulso", label: "Pulso de posición recibido", fase: "pruebas" },
+  { id: "rele", label: "Corte y sirena probados con el vehículo detenido", fase: "pruebas" },
+  { id: "firma", label: "Firma y conformidad de quien recibe", fase: "cierre" },
+];
+
+const CHECKLIST_COMPLETO = CHECKLIST.map((c) => c.id);

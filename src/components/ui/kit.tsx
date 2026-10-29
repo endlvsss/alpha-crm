@@ -110,30 +110,51 @@ export function Kpi({
   hint,
   tone,
   href,
+  delta,
 }: {
   label: string;
   value: ReactNode;
   hint?: ReactNode;
   tone?: Tone;
   href?: string;
+  /** Variación contra el período anterior, en %. */
+  delta?: number | null;
 }) {
   const body = (
     <>
-      <p className="text-xs font-medium text-muted">{label}</p>
+      <p className="flex items-center justify-between gap-2 text-xs font-medium text-muted">
+        <span className="truncate">{label}</span>
+        {delta != null && Number.isFinite(delta) && (
+          <span
+            className={`shrink-0 rounded-md px-1.5 py-px font-mono text-[0.75rem] tabular-nums ${
+              delta > 0 ? "bg-ok-soft text-ok" : delta < 0 ? "bg-danger-soft text-danger" : "bg-ink/[0.07] text-muted"
+            }`}
+            title="Contra el período anterior"
+          >
+            {delta > 0 ? "▲" : delta < 0 ? "▼" : "="} {Math.abs(Math.round(delta))}%
+          </span>
+        )}
+      </p>
       <p className={`mt-1 font-display text-2xl font-bold tracking-[-0.02em] tabular-nums ${tone ? toneText[tone] : "text-ink"}`}>
         {value}
       </p>
-      {hint && <p className="mt-0.5 text-xs text-muted">{hint}</p>}
+      {hint && <p className="mt-0.5 truncate text-xs text-muted">{hint}</p>}
     </>
   );
-  const cls = "block rounded-2xl bg-surface p-4";
+  const cls = "group block min-w-0 rounded-2xl bg-surface p-4";
   return href ? (
-    <Link href={href} className={`${cls} transition-colors hover:bg-surface-2`}>
+    <Link href={href} className={`${cls} transition-[background-color,transform] duration-200 hover:-translate-y-px hover:bg-surface-2`}>
       {body}
     </Link>
   ) : (
     <div className={cls}>{body}</div>
   );
+}
+
+/** Variación porcentual entre dos valores; null si no hay base. */
+export function pct(actual: number, anterior: number): number | null {
+  if (!anterior) return actual ? null : 0;
+  return ((actual - anterior) / anterior) * 100;
 }
 
 const toneText: Record<Tone, string> = {
@@ -174,7 +195,7 @@ export function Tabs({ items, current }: { items: { key: string; label: string; 
 
 export function Table({ head, children, minWidth = 720 }: { head: ReactNode[]; children: ReactNode; minWidth?: number }) {
   return (
-    <div className="overflow-x-auto rounded-2xl bg-surface">
+    <div className="relative overflow-x-auto rounded-2xl bg-surface">
       <table className="w-full text-left text-sm" style={{ minWidth }}>
         <thead>
           <tr className="text-xs font-medium text-muted">
@@ -193,8 +214,22 @@ export function Table({ head, children, minWidth = 720 }: { head: ReactNode[]; c
   );
 }
 
-export function Empty({ children }: { children: ReactNode }) {
-  return <p className="rounded-xl bg-bg-sunken/60 px-4 py-6 text-center text-sm text-muted">{children}</p>;
+export function Empty({ children, action }: { children: ReactNode; action?: ReactNode }) {
+  return (
+    <div className="flex flex-col items-center gap-3 rounded-xl bg-bg-sunken/60 px-4 py-8 text-center text-sm text-muted">
+      <p className="max-w-md">{children}</p>
+      {action}
+    </div>
+  );
+}
+
+/** Marca visible de dato ficticio o ilustrativo. */
+export function DemoTag({ children = "Demo" }: { children?: ReactNode }) {
+  return (
+    <span className="inline-flex items-center rounded-md bg-amber-soft px-1.5 py-px font-mono text-[0.7rem] font-semibold tracking-wider text-amber uppercase">
+      {children}
+    </span>
+  );
 }
 
 export function Avatar({ name, className = "" }: { name: string; className?: string }) {

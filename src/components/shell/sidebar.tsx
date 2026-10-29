@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { LogoHorizontal } from "@/components/brand/logo";
-import { CloseIcon, MenuIcon, SearchIcon } from "@/components/ui/icons";
+import { ArrowUpRightIcon, CloseIcon, MenuIcon, SearchIcon } from "@/components/ui/icons";
 import { NAV } from "./nav";
 import { ThemeToggle } from "./theme-toggle";
 
@@ -24,8 +24,20 @@ function Links({ onNavigate }: { onNavigate?: () => void }) {
             </p>
           )}
           <ul className="flex flex-col gap-0.5">
-            {group.items.map(({ href, label, icon: Icon }) => {
-              const active = isActive(pathname, href);
+            {group.items.map(({ href, label, icon: Icon, externo }) => {
+              const active = !externo && isActive(pathname, href);
+              if (externo) {
+                return (
+                  <li key={href}>
+                    <a href={href} target="_blank" rel="noreferrer" onClick={onNavigate} className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium text-ink-soft transition-colors hover:bg-ink/[0.06] hover:text-ink">
+                      <Icon className="size-[1.1rem] shrink-0" />
+                      {label}
+                      <ArrowUpRightIcon className="ml-auto size-3.5 text-muted" />
+                      <span className="sr-only">(abre en otra pestaña)</span>
+                    </a>
+                  </li>
+                );
+              }
               return (
                 <li key={href}>
                   <Link
@@ -71,8 +83,8 @@ function Footer() {
   return (
     <div className="flex items-center justify-between gap-2 rounded-xl bg-bg-sunken/70 p-2 pl-3">
       <div className="min-w-0">
-        <p className="truncate text-sm font-semibold text-ink">Operaciones</p>
-        <p className="truncate text-xs text-muted">Demo · datos ficticios</p>
+        <p className="truncate text-sm font-semibold text-ink">Ignacia Bravo</p>
+        <p className="truncate text-xs text-muted">Operaciones · usuario DEMO</p>
       </div>
       <ThemeToggle className="shrink-0" />
     </div>

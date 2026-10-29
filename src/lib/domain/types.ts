@@ -32,6 +32,13 @@ export type SubestadoCliente =
 
 export type Origen = "meta" | "google" | "tiktok" | "organico" | "referido" | "whatsapp";
 
+/** Persona del equipo interno de Alpha Link (ficticia en la demo). */
+export interface Usuario {
+  id: string;
+  nombre: string;
+  rol: "ventas" | "operaciones" | "soporte" | "finanzas";
+}
+
 export interface Cliente {
   id: string;
   nombre: string;
@@ -48,9 +55,25 @@ export interface Cliente {
   creadoEn: Iso;
   /** Evento CUENTA CREADA: el pago se aprobó y existe la cuenta en la plataforma. */
   cuentaCreadaEn: Iso | null;
-  /** Evento INSTALADO del primer vehículo. */
+  /** Evento INSTALADO del primer vehículo (instalación física terminada). */
   instaladoEn: Iso | null;
+  /**
+   * Activación confirmada del servicio. Va separada de la instalación física:
+   * sin API de la plataforma GPS, la confirma una persona (diagnóstico §4.4).
+   */
+  activadoEn: Iso | null;
   motivoBaja: string | null;
+  /** Ejecutivo o persona de Operaciones a cargo del caso. */
+  responsableId: string;
+}
+
+/** Nota administrativa interna sobre un cliente. */
+export interface Nota {
+  id: string;
+  clienteId: string;
+  autorId: string;
+  texto: string;
+  en: Iso;
 }
 
 export interface Vehiculo {
@@ -70,6 +93,7 @@ export interface Vehiculo {
 
 export type EstadoOrden =
   | "checkout_iniciado"
+  | "pendiente_pago"
   | "abandonada"
   | "pago_rechazado"
   | "pagada"
@@ -84,10 +108,30 @@ export interface Orden {
   vehiculos: number;
   estado: EstadoOrden;
   montoTotal: number;
-  pasarela: "webpay";
+  pasarela: Pasarela;
   pagoRef: string | null;
   creadaEn: Iso;
   pagadaEn: Iso | null;
+}
+
+/** Webpay quedó decidido el 15/10; Mercado Pago se discutió después (PENDIENTE). */
+export type Pasarela = "webpay" | "mercadopago";
+
+/**
+ * Intento de pago de una orden. Va separado de la orden para no confundir
+ * «orden creada» con «pago confirmado» ni declarar ingresos sin pago.
+ */
+export interface Pago {
+  id: string;
+  ordenFolio: string;
+  clienteId: string;
+  monto: number;
+  pasarela: Pasarela;
+  estado: "pendiente" | "aprobado" | "rechazado" | "reembolsado";
+  ref: string | null;
+  motivo: string | null;
+  creadoEn: Iso;
+  resueltoEn: Iso | null;
 }
 
 // ——— Suscripción y cobro (sección 6.4, tramo 4) ———
@@ -125,6 +169,13 @@ export interface Cobro {
 
 // ——— Instaladores y agenda (secciones 5 y 7) ———
 
+export type EstadoTecnico = "postulante" | "en_validacion" | "activo" | "suspendido" | "baja";
+
+export interface DocumentoTecnico {
+  tipo: "cedula" | "antecedentes" | "licencia" | "certificacion";
+  estado: "pendiente" | "aprobado" | "rechazado";
+}
+
 export interface Tecnico {
   id: string;
   nombre: string;
@@ -132,9 +183,16 @@ export interface Tecnico {
   telefono: string;
   email: string;
   comunas: string[];
-  estado: "postulante" | "en_validacion" | "activo" | "suspendido" | "baja";
+  estado: EstadoTecnico;
   cupoDiario: number;
   validadoEn: IsoDate | null;
+  postuladoEn: IsoDate;
+  experienciaAnios: number;
+  /** Marcas o tipos de vehículo en que tiene experiencia, declarados al postular. */
+  especialidades: string[];
+  documentos: DocumentoTecnico[];
+  /** Bloques que acepta tomar, por día de la semana (1 = lunes … 6 = sábado). */
+  disponibilidad: Record<number, string[]>;
 }
 
 export type TipoVisita = "instalacion" | "segunda_visita" | "visita_tecnica" | "traslado";
@@ -183,6 +241,11 @@ export interface Visita {
   checkInEn: Iso | null;
   checkOutEn: Iso | null;
   creadaEn: Iso;
+  /** Ítems del checklist del técnico marcados como hechos. */
+  checklist: string[];
+  observaciones: string | null;
+  /** Fotos de evidencia (en la demo solo se cuentan; no hay archivos). */
+  fotos: number;
 }
 
 export interface Dispositivo {
@@ -214,6 +277,7 @@ export interface Ticket {
   asunto: string;
   detalle: string;
   visitaFolio: string | null;
+  responsableId: string | null;
   creadoEn: Iso;
   resueltoEn: Iso | null;
 }
@@ -238,15 +302,31 @@ export interface AlertaPlataforma {
   resuelta: boolean;
 }
 
+// ——— Integraciones (demo) ———
+
+/** Evento recibido de otro sistema (sitio o portal del técnico) y aplicado en el CRM. */
+export interface EntradaIntegracion {
+  /** id del evento de origen: sirve para no aplicarlo dos veces (idempotencia). */
+  id: string;
+  tipo: string;
+  origen: "sitio" | "portal";
+  recibidoEn: Iso;
+  resumen: string;
+  clienteId: string | null;
+}
+
 // ——— Bitácora inmutable (tabla eventos) ———
 
 export interface Evento {
   id: string;
-  clienteId: string;
-  entidad: "cliente" | "orden" | "visita" | "suscripcion" | "ticket" | "plataforma";
+  /** Null en eventos que no son de un cliente (técnicos, inventario). */
+  clienteId: string | null;
+  entidad: "cliente" | "orden" | "visita" | "suscripcion" | "ticket" | "plataforma" | "tecnico" | "dispositivo";
   entidadRef: string;
   tipo: string;
   detalle: string | null;
   actor: "sistema" | "cliente" | "tecnico" | "operaciones";
   en: Iso;
+  /** Lo generó una acción de la demo, no la semilla. */
+  demo?: boolean;
 }

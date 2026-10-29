@@ -1,5 +1,8 @@
 import type {
   CausaFalla,
+  Dispositivo,
+  EstadoTecnico,
+  Pago,
   EstadoCliente,
   EstadoOrden,
   EstadoSuscripcion,
@@ -41,6 +44,7 @@ export const ORIGEN_LABEL: Record<Origen, string> = {
 
 export const ESTADO_ORDEN: Record<EstadoOrden, { label: string; tone: Tone }> = {
   checkout_iniciado: { label: "Checkout iniciado", tone: "muted" },
+  pendiente_pago: { label: "Pendiente de pago", tone: "amber" },
   abandonada: { label: "Abandonada", tone: "amber" },
   pago_rechazado: { label: "Pago rechazado", tone: "danger" },
   pagada: { label: "Pagada", tone: "ok" },
@@ -116,3 +120,79 @@ export const VISITA_ACTIVA: EstadoVisita[] = [
   "en_instalacion",
   "en_pruebas",
 ];
+
+/**
+ * Grupos de estado de una instalación para Operaciones. Agrupan los estados
+ * internos de la visita (sección 6.2 de la especificación) en 7 lecturas simples.
+ */
+export type GrupoVisita = "pendiente" | "asignada" | "en_camino" | "en_proceso" | "completada" | "cancelada" | "revision";
+
+export const GRUPO_VISITA: Record<GrupoVisita, { label: string; tone: Tone }> = {
+  pendiente: { label: "Pendiente", tone: "brand" },
+  asignada: { label: "Asignada", tone: "amber" },
+  en_camino: { label: "En camino", tone: "accent" },
+  en_proceso: { label: "En proceso", tone: "accent" },
+  completada: { label: "Completada", tone: "ok" },
+  cancelada: { label: "Cancelada", tone: "muted" },
+  revision: { label: "Requiere revisión", tone: "danger" },
+};
+
+export function grupoVisita(estado: EstadoVisita): GrupoVisita {
+  switch (estado) {
+    case "por_agendar":
+    case "lista_espera":
+      return "pendiente";
+    case "agendada":
+    case "confirmada":
+      return "asignada";
+    case "en_camino":
+      return "en_camino";
+    case "en_sitio":
+    case "en_instalacion":
+    case "en_pruebas":
+      return "en_proceso";
+    case "cerrada_ok":
+      return "completada";
+    case "cancelada":
+      return "cancelada";
+    default:
+      return "revision";
+  }
+}
+
+export const ESTADO_TECNICO: Record<EstadoTecnico, { label: string; tone: Tone }> = {
+  postulante: { label: "Postulante", tone: "muted" },
+  en_validacion: { label: "En validación", tone: "amber" },
+  activo: { label: "Activo", tone: "ok" },
+  suspendido: { label: "Suspendido", tone: "danger" },
+  baja: { label: "Baja", tone: "muted" },
+};
+
+export const DOCUMENTO_TECNICO: Record<string, string> = {
+  cedula: "Cédula de identidad",
+  antecedentes: "Certificado de antecedentes",
+  licencia: "Licencia de conducir",
+  certificacion: "Certificación eléctrica automotriz",
+};
+
+export const ESTADO_PAGO: Record<Pago["estado"], { label: string; tone: Tone }> = {
+  pendiente: { label: "Pendiente", tone: "amber" },
+  aprobado: { label: "Confirmado", tone: "ok" },
+  rechazado: { label: "Rechazado", tone: "danger" },
+  reembolsado: { label: "Reembolsado", tone: "muted" },
+};
+
+export const ESTADO_DISPOSITIVO: Record<Dispositivo["estado"], { label: string; tone: Tone }> = {
+  en_stock: { label: "En bodega", tone: "muted" },
+  asignado: { label: "En custodia", tone: "brand" },
+  instalado: { label: "Instalado · por activar", tone: "amber" },
+  activo: { label: "Activo", tone: "ok" },
+  falla: { label: "Con falla", tone: "danger" },
+  retirado: { label: "Retirado", tone: "muted" },
+};
+
+export const NIVEL_TONE: Record<"INFO" | "ATENCIÓN" | "URGENTE", Tone> = {
+  INFO: "muted",
+  ATENCIÓN: "amber",
+  URGENTE: "danger",
+};

@@ -1,4 +1,4 @@
-import type { ClienteDetalle } from "@/data";
+import type { ClienteDetalle } from "@/services/mock/queries";
 import { BLOQUE_FIN } from "@/data/seed";
 import { formatDateTime } from "@/lib/format";
 import { getPlan } from "@/lib/plans";

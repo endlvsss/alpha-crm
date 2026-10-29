@@ -1,4 +1,4 @@
-import type { ClienteDetalle } from "@/data";
+import type { ClienteDetalle } from "@/services/mock/queries";
 import { formatDateTime } from "@/lib/format";
 import { CheckIcon } from "@/components/ui/icons";
 
@@ -7,16 +7,16 @@ export function Journey({ data }: { data: ClienteDetalle }) {
   const { cliente, ordenes, visitas, eventos } = data;
   const fecha = (tipo: string) => eventos.find((e) => e.tipo === tipo)?.en ?? null;
   const pagada = ordenes.find((o) => o.pagadaEn);
-  const agendada = visitas.find((v) => v.tipo === "instalacion" && v.fecha);
+  const agendada = visitas.find((v) => v.tipo === "instalacion" && v.fecha && v.estado !== "cancelada");
   const terminal = cliente.estado === "SUSPENDIDO" || cliente.estado === "CANCELADO";
 
   const steps: { label: string; at: string | null; note?: string }[] = [
     { label: "LEAD", at: cliente.creadoEn },
     { label: "PAGADO", at: pagada?.pagadaEn ?? null },
     { label: "CUENTA CREADA", at: cliente.cuentaCreadaEn, note: "evento" },
-    { label: "INSTALACIÓN AGENDADA", at: agendada ? fecha("INSTALACIÓN AGENDADA") : null },
+    { label: "INSTALACIÓN AGENDADA", at: agendada ? fecha("INSTALACIÓN AGENDADA") ?? agendada.creadaEn : null },
     { label: "INSTALADO", at: cliente.instaladoEn, note: "evento" },
-    { label: "ACTIVO", at: cliente.instaladoEn },
+    { label: "ACTIVO", at: cliente.activadoEn },
   ];
   if (terminal) steps.push({ label: cliente.estado, at: fecha(cliente.estado) ?? fecha("SUSPENDIDO") });
 

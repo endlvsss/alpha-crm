@@ -12,6 +12,10 @@ Registro de decisiones para quien continúe el desarrollo. Las decisiones de neg
 | 27/10/2026 | Repositorio propio; el sitio se conecta por API | Entrega más simple a los socios y al equipo. |
 | 27/10/2026 | El portal del técnico (`/instalador`) se mueve del sitio al CRM | Mismo login, roles y base (decisión D1 de la especificación). |
 | 27/10/2026 | Primero el mockup visual con datos ficticios | Sin acceso a GPSTracker ni a la base todavía; sirve para validar con los socios. |
+| 27/10/2026 | Ecosistema de sistemas independientes, conectados por navegación e integraciones (reunión del 27/10) | Arquitectura definitiva de bases, APIs, permisos y sincronización: a revisar con Adolfo, Camila y Matías. |
+| 27/10/2026 | Frontend en modo DEMO con capa de servicios y proveedor mock intercambiable | Permite demostrar el flujo completo sin backend; el proveedor real se conecta sin rehacer pantallas. |
+| 27/10/2026 | Pipeline de 8 etapas derivado de eventos; mover una tarjeta ejecuta el evento simulado | Mantiene la decisión D7 (el estado lo calcula el sistema). |
+| 27/10/2026 | La instalación física y la activación del servicio son pasos separados | Sin API de la plataforma GPS, la activación la confirma una persona (diagnóstico §4.4). |
 | 15/10/2026 | Planes Esencial · Seguridad · Flota, precios provisorios | Decisión del cliente. |
 | 15/10/2026 | Corte de suministro y sirena se ofrecen, solo con el vehículo detenido | Decisión del cliente. |
 | 15/10/2026 | Pago con Webpay, mensual o anual (anual: 10 meses pagados, 12 de uso) | Decisión del cliente. |
